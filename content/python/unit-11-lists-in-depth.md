@@ -532,7 +532,7 @@ If `index` cannot find the item, you get a `ValueError`:
 print(["a"].index("z"))
 ```
 
-Python says: `ValueError: 'z' is not in list`. So check with `in` first if the item might be missing.
+Python says: `ValueError: list.index(x): x not in list`. (Some versions of Python word it as `'z' is not in list`. The kind of error, ValueError, is the same.) So check with `in` first if the item might be missing.
 
 **1. Predict the output**
 ```python

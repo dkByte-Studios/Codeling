@@ -250,14 +250,14 @@ MESSAGES = [
     ('say_hi()\n\ndef say_hi():\n    print("Hi!")', "name 'say_hi' is not defined"),
     ('nums = [1, 2, 3]\nprint(nums[-4])', "IndexError: list index out of range"),
     ('nums = [1, 2]\nnums.remove(9)', "ValueError: list.remove(x): x not in list"),
-    ('print(["a"].index("z"))', "ValueError: 'z' is not in list"),
+    ('print(["a"].index("z"))', "ValueError: list.index(x): x not in list || ValueError: 'z' is not in list"),
     ('student = {"name": "Sam"}\nprint(student["grade"])', "KeyError: 'grade'"),
     ('word = "cat"\nprint(word[3])', "IndexError: string index out of range"),
     ('word = "cat"\nword[0] = "b"', "TypeError: 'str' object does not support item assignment"),
     ("class Book:\n    pass\n\nb = Book()\nprint(b.title)", "AttributeError: 'Book' object has no attribute 'title'"),
     ('class Book:\n    def __init__(self, title, author):\n        self.title = title\n        self.author = author\n\nb = Book("Dune")', "TypeError: Book.__init__() missing 1 required positional argument: 'author'"),
     ('class Counter:\n    def __init__(self):\n        self.count = 0\n\n    def add():\n        self.count += 1\n\nc = Counter()\nc.add()', "TypeError: Counter.add() takes 0 positional arguments but 1 was given"),
-    ('with open("missing.txt") as f:\n    print(f.read())',"FileNotFoundError: [Errno 2] No such file or directory: 'missing.txt'"),
+    ('with open("missing.txt") as f:\n    print(f.read())',"FileNotFoundError: [Errno 44] No such file or directory: 'missing.txt' || FileNotFoundError: [Errno 2] No such file or directory: 'missing.txt'"),
     ('import json\nprint(json.loads("{\'name\': \'Sam\'}"))', "Expecting property name enclosed in double quotes"),
 ]
 
@@ -267,7 +267,8 @@ def check_messages(stats):
     for code, needle in MESSAGES:
         rc, out, e = run_code(code, [])
         stats["messages"] += 1
-        if needle not in e:
+        # " || " separates wordings that different Python versions use (the app runs Pyodide's Python)
+        if not any(n in e for n in needle.split(" || ")):
             problems.append(f"message check: {code!r} did not give {needle!r}; got {e.strip().splitlines()[-1] if e.strip() else 'nothing'}")
     return problems
 

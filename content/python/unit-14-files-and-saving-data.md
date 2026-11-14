@@ -564,7 +564,7 @@ with open("missing.txt") as f:
     print(f.read())
 ```
 
-Python says: `FileNotFoundError: [Errno 2] No such file or directory: 'missing.txt'`.
+Python says: `FileNotFoundError: [Errno 44] No such file or directory: 'missing.txt'`. (On many computers the number in brackets is 2. The number does not matter, the words do.)
 
 You can catch an error and decide what to do instead of letting the program crash. The tool is `try` and `except`:
 
