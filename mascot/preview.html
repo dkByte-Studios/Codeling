@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Codeling mascot</title>
+<style>
+:root{--bg:#FFFBEF;--card:#FFFFFF;--ink:#073D33;--line:#F5DFA0}
+:root[data-theme=dark]{--bg:#12211E;--card:#1B302B;--ink:#E8F5EF;--line:#2C4A43}
+body{margin:0;padding:24px 16px;background:var(--bg);color:var(--ink);font-family:system-ui,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;max-width:960px;margin:0 auto 16px}
+h1{margin:0;font-size:22px}
+button{font:inherit;padding:8px 14px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+main{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;max-width:960px;margin:0 auto}
+figure{margin:0;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:12px;text-align:center}
+img{width:100%;height:auto}
+figcaption{margin-top:4px;font-weight:600}
+</style></head><body>
+<header><h1>Codeling mascot: 12 emotions</h1><button id="t">Dark mode</button></header>
+<main>
+<figure><img src="svg/codeling-happy.svg" alt="Happy"><figcaption>Happy</figcaption></figure>
+<figure><img src="svg/codeling-wave.svg" alt="Wave and wink"><figcaption>Wave and wink</figcaption></figure>
+<figure><img src="svg/codeling-thinking.svg" alt="Thinking"><figcaption>Thinking</figcaption></figure>
+<figure><img src="svg/codeling-worried.svg" alt="Worried"><figcaption>Worried</figcaption></figure>
+<figure><img src="svg/codeling-sad.svg" alt="Sad"><figcaption>Sad</figcaption></figure>
+<figure><img src="svg/codeling-cheer.svg" alt="Cheering"><figcaption>Cheering</figcaption></figure>
+<figure><img src="svg/codeling-starry.svg" alt="Starry-eyed"><figcaption>Starry-eyed</figcaption></figure>
+<figure><img src="svg/codeling-determined.svg" alt="Determined"><figcaption>Determined</figcaption></figure>
+<figure><img src="svg/codeling-sleepy.svg" alt="Sleepy"><figcaption>Sleepy</figcaption></figure>
+<figure><img src="svg/codeling-surprised.svg" alt="Surprised"><figcaption>Surprised</figcaption></figure>
+<figure><img src="svg/codeling-confused.svg" alt="Confused"><figcaption>Confused</figcaption></figure>
+<figure><img src="svg/codeling-proud.svg" alt="Proud"><figcaption>Proud</figcaption></figure>
+</main>
+<script>document.getElementById('t').onclick=function(){var r=document.documentElement;var d=r.dataset.theme==='dark';r.dataset.theme=d?'light':'dark';this.textContent=d?'Dark mode':'Light mode'}</script>
+</body></html>
