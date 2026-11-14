@@ -3,6 +3,7 @@
 import type { FromWorker, RunOptions, RunResult, ToWorker } from './protocol';
 
 const DEFAULT_TIME_LIMIT_MS = 5000;
+const START_TIMEOUT_MS = 60_000;
 
 export class PythonRunner {
   private worker!: Worker;
@@ -16,33 +17,58 @@ export class PythonRunner {
   loadMs: number | null = null;
   /** How many times the worker had to be restarted after a stop or timeout. */
   restarts = 0;
+  /** Why Python could not start, in words. Null when it started fine. */
+  error: string | null = null;
   onStatus: (status: 'loading' | 'ready' | 'failed') => void = () => {};
+  private startTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private readonly baseUrl: string) {
     this.start();
   }
 
   private start() {
+    this.error = null;
     this.onStatus('loading');
     this.ready = new Promise<void>((resolve, reject) => {
       this.readyResolve = resolve;
       this.readyReject = reject;
     });
     this.ready.catch(() => {});
-    this.worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
+    clearTimeout(this.startTimer);
+    this.startTimer = setTimeout(
+      () => this.fail('Python took longer than 60 seconds to start. Check your connection and try again.'),
+      START_TIMEOUT_MS,
+    );
+    try {
+      this.worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
+    } catch (error) {
+      this.fail(`This browser could not create the Python worker: ${error instanceof Error ? error.message : String(error)}`);
+      return;
+    }
     this.worker.onmessage = (event: MessageEvent<FromWorker>) => this.handle(event.data);
-    this.worker.onerror = (event) => this.fail(event.message || 'The Python worker crashed.');
+    this.worker.onerror = (event) =>
+      this.fail(event.message || `The Python worker could not start (file: ${event.filename || 'unknown'}).`);
+    this.worker.onmessageerror = () => this.fail('The Python worker sent a message the page could not read.');
     const init: ToWorker = { type: 'init', indexURL: `${location.origin}${this.baseUrl}pyodide/` };
     this.worker.postMessage(init);
   }
 
   private fail(message: string) {
+    clearTimeout(this.startTimer);
+    this.error = message;
     this.onStatus('failed');
     this.readyReject(new Error(message));
   }
 
+  /** Throws the worker away and tries to start Python again. */
+  retry() {
+    this.worker?.terminate();
+    this.start();
+  }
+
   private handle(message: FromWorker) {
     if (message.type === 'ready') {
+      clearTimeout(this.startTimer);
       if (this.loadMs === null) this.loadMs = message.loadMs;
       this.onStatus('ready');
       this.readyResolve();
