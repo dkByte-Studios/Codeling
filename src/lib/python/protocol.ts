@@ -35,6 +35,8 @@ export type RunResult = {
   status: 'done' | 'needInput' | 'error' | 'timeout' | 'stopped';
   /** Everything the program showed, including prompts and the answers typed. */
   transcript: string;
+  /** Only what the program printed. This is what typed exercises are checked against. */
+  stdout: string;
   prompt?: string;
   error?: RunError;
   ms: number;

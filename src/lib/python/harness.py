@@ -19,11 +19,15 @@ class NeedInput(BaseException):
 
 
 class Out:
-    def __init__(self, transcript):
+    """What the program prints. The console shows it; the grader reads only the printed text."""
+
+    def __init__(self, transcript, printed):
         self.transcript = transcript
+        self.printed = printed
 
     def write(self, text):
         self.transcript.append(text)
+        self.printed.append(text)
         return len(text)
 
     def flush(self):
@@ -60,6 +64,7 @@ def run_user_code(code, inputs_json, files_json, keep_files, seed):
     inputs = json.loads(inputs_json)
     files = json.loads(files_json)
     transcript = []
+    printed = []
     os.makedirs(WORK, exist_ok=True)
     os.chdir(WORK)
     if not keep_files:
@@ -82,7 +87,7 @@ def run_user_code(code, inputs_json, files_json, keep_files, seed):
         return answer
 
     saved = (sys.stdout, sys.stderr, builtins.input)
-    sys.stdout = sys.stderr = Out(transcript)
+    sys.stdout = sys.stderr = Out(transcript, printed)
     builtins.input = fake_input
     random.seed(seed)
     result = {"status": "done", "prompt": None, "error": None}
@@ -99,4 +104,5 @@ def run_user_code(code, inputs_json, files_json, keep_files, seed):
     finally:
         sys.stdout, sys.stderr, builtins.input = saved
     result["transcript"] = "".join(transcript)
+    result["stdout"] = "".join(printed)
     return json.dumps(result)

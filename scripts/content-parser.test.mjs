@@ -55,6 +55,7 @@ test('every exercise and question is well formed', () => {
         assert.ok(e.pairs.length >= 2, `${where} pairs`);
       } else if (e.type === 'typed') {
         assert.ok(e.tests.length >= 1, `${where} tests`);
+        assert.ok(e.solution.trim().length > 0, `${where} has a model answer`);
         for (const t of e.tests) assert.equal(typeof t.expected, 'string', where);
       } else if (e.type === 'trace') {
         assert.ok(e.rows.length >= 1 && e.vars.length >= 1 && Number.isInteger(e.line), `${where} trace`);
@@ -89,6 +90,21 @@ test('sample files and typed answers reach the tests', () => {
   const guess = units[5].project;
   assert.ok(guess.tests.length >= 2);
   assert.deepEqual(guess.tests[0].inputs, ['5', '9', '7']);
+});
+
+test('exercises that try other starting values keep the swaps', () => {
+  const ages = units[3].lessons[3].exercises.at(-1);
+  assert.deepEqual(ages.tests.map((t) => t.expected), ['Child', 'Teen', 'Adult']);
+  assert.equal(ages.tests[0].substitute, undefined);
+  assert.deepEqual(ages.tests[1].substitute, [{ from: 'age = 8', to: 'age = 15' }]);
+  assert.deepEqual(ages.tests[2].substitute, [{ from: 'age = 8', to: 'age = 30' }]);
+});
+
+test('error samples keep the answers they are given', () => {
+  const lesson = units[1].lessons[5];
+  const block = lesson.exercises[4].prompt.find((b) => b.t === 'code');
+  assert.equal(block.errorType, 'TypeError');
+  assert.deepEqual(block.inputs, ['12']);
 });
 
 test('trace tables keep their rows', () => {

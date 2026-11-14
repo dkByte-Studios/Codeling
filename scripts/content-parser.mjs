@@ -107,6 +107,7 @@ export function toBlocks(tokens) {
       if (meta.inputs.length) block.inputs = meta.inputs;
     } else if (meta.kind === 'error') {
       block.errorType = meta.errorType;
+      if (meta.inputs.length) block.inputs = meta.inputs;
     } else if (meta.kind === 'trace') {
       block.trace = { line: meta.line, vars: meta.vars };
     } else if (meta.kind === 'json' || meta.kind === 'badjson') {
@@ -118,6 +119,18 @@ export function toBlocks(tokens) {
     out.push(block);
   }
   return out;
+}
+
+/** The code of the first program that prints something: the model answer for a typed exercise. */
+function firstSolution(tokens) {
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    if (tok.t === 'fence' && fenceMeta(tok.info).kind === 'python') {
+      const next = tokens[i + 1];
+      if (next?.t === 'fence' && next.info.trim() === 'output') return tok.code;
+    }
+  }
+  return '';
 }
 
 /** The programs in a body that print something, with the answers typed and the files they start with. */
@@ -133,10 +146,21 @@ function extractTests(tokens) {
     } else if (meta.kind === 'python') {
       const next = tokens[i + 1];
       if (next?.t === 'fence' && next.info.trim() === 'output') {
-        tests.push({ inputs: meta.inputs, files, expected: next.code.trim() });
+        tests.push({ inputs: meta.inputs, files, expected: next.code.trim(), code: tok.code });
         files = {};
       }
     }
+  }
+  // Some exercises show the model answer several times with a different starting value (age = 8, age = 15).
+  // The learner's code is tested with the same swaps: each changed line is replaced in their program.
+  const base = tests[0]?.code.split('\n');
+  for (const test of tests) {
+    const lines = test.code.split('\n');
+    if (base && lines.length === base.length) {
+      const substitute = lines.flatMap((line, i) => (line !== base[i] ? [{ from: base[i], to: line }] : []));
+      if (substitute.length) test.substitute = substitute;
+    }
+    delete test.code;
   }
   return tests;
 }
@@ -303,6 +327,7 @@ export function parseExercise(heading, body) {
         type: 'typed',
         prompt,
         starter: starter && starter !== 'waiting' ? starter : '',
+        solution: firstSolution(allTokens),
         tests,
         mustContain,
         mustMatch,

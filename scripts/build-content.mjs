@@ -9,15 +9,20 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const source = join(root, 'content', 'python');
 const target = join(root, 'src', 'content', 'generated');
 
-rmSync(target, { recursive: true, force: true });
+// Files are overwritten in place, not deleted first, so a running dev server never sees the folder vanish.
 mkdirSync(target, { recursive: true });
+const written = new Set();
+const save = (name, data) => {
+  writeFileSync(join(target, name), JSON.stringify(data));
+  written.add(name);
+};
 
 const index = [];
 const counts = { lessons: 0, exercises: 0, quiz: 0, exam: 0, skipped: 0 };
 for (const name of readdirSync(source).filter((f) => /^unit-\d+.*\.md$/.test(f)).sort()) {
   const unit = parseUnit(readFileSync(join(source, name), 'utf8').replace(/\r\n/g, '\n'));
   const id = String(unit.unit).padStart(2, '0');
-  writeFileSync(join(target, `unit-${id}.json`), JSON.stringify(unit));
+  save(`unit-${id}.json`, unit);
   index.push({
     unit: unit.unit,
     title: unit.title,
@@ -32,7 +37,8 @@ for (const name of readdirSync(source).filter((f) => /^unit-\d+.*\.md$/.test(f))
   counts.skipped += unit.skipped.length;
   for (const s of unit.skipped) console.warn(`  skipped ${s.lesson} #${s.number} (${s.title}): ${s.reason}`);
 }
-writeFileSync(join(target, 'index.json'), JSON.stringify({ units: index }));
+save('index.json', { units: index });
+for (const name of readdirSync(target)) if (!written.has(name)) rmSync(join(target, name), { force: true });
 console.log(
   `Content: ${index.length} units, ${counts.lessons} lessons, ${counts.exercises} exercises, ${counts.quiz} quiz questions, ${counts.exam} exam questions, ${counts.skipped} skipped.`,
 );
