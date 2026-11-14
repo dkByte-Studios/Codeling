@@ -3,3 +3,5 @@ dist
 public/pyodide
 .claude
 *.log
+
+src/content/generated
