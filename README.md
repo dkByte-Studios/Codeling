@@ -4,7 +4,7 @@ Learn programming in short, game-like lessons, in your browser. Starts with Pyth
 
 Everything runs on your device: no account, no server, no tracking. Python runs inside the page using [Pyodide](https://pyodide.org), so typed code challenges work offline once the app has loaded.
 
-**Status:** early. The Python course is written (16 units, 84 lessons) and the app plays every lesson: reading, tap exercises, trace tables and typed code that runs in the browser. Still to build: unit quizzes that unlock the next unit, streaks and daily goals, review of mistakes, the first-time setup, and the capstone and final exam screens.
+**Status:** early. The Python course is written (16 units, 84 lessons) and the app plays every lesson: reading, tap exercises, trace tables and typed code that runs in the browser. Each unit ends with a quiz: 10 questions drawn from a bank of 25, 70% to pass, and passing opens the next unit (or lets you test out of a unit). Still to build: streaks and daily goals, review of mistakes, the first-time setup, and the capstone and final exam screens.
 
 ## Run it
 

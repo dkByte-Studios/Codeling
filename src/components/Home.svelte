@@ -3,7 +3,9 @@
   import { progress } from '../lib/progress.svelte';
   import Mascot from './Mascot.svelte';
 
-  let { onstart }: { onstart: (lessonId: string) => void } = $props();
+  let { onstart, onquiz }: { onstart: (lessonId: string) => void; onquiz: (unit: number) => void } = $props();
+
+  const next = $derived(progress.next);
 
   // Each unit gets its own color, cycling through the palette.
   const colors = [
@@ -41,7 +43,7 @@
           {#each unit.lessons as lesson, i}
             {@const done = progress.isDone(lesson.id)}
             {@const open = progress.isUnlocked(lesson.id)}
-            {@const here = progress.current === lesson.id}
+            {@const here = next?.kind === 'lesson' && next.id === lesson.id}
             <div class="slot" style:margin-left="{sway[i % sway.length]}px">
               {#if here}<span class="start">Start</span>{/if}
               <button
@@ -61,6 +63,37 @@
             </div>
           {/each}
         </div>
+        {#if unit.quizQuestions > 0}
+          {@const open = progress.isQuizOpen(unit.unit)}
+          {@const passed = progress.isQuizPassed(unit.unit)}
+          {@const score = progress.quizScore(unit.unit)}
+          {@const here = next?.kind === 'quiz' && next.unit === unit.unit}
+          <div class="quiz-row">
+            {#if here}<span class="start">Start</span>{/if}
+            <button
+              type="button"
+              class="quiz"
+              class:passed
+              class:here
+              disabled={!open}
+              style:--bg={passed ? color.bg : here ? 'var(--gold)' : 'var(--card)'}
+              style:--edge={passed ? color.edge : here ? 'var(--gold-edge)' : 'var(--line)'}
+              onclick={() => onquiz(unit.unit)}
+            >
+              {#if !open}
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+              {:else}
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" /></svg>
+              {/if}
+              <span class="quiz-text">
+                <strong>Unit {unit.unit} quiz</strong>
+                <small>
+                  {#if passed}Passed, best {score}%{:else if open}{progress.allLessonsDone(unit.unit) ? 'Score 70% to open the next unit' : 'Test out: pass it to skip ahead'}{:else}Locked{/if}
+                </small>
+              </span>
+            </button>
+          </div>
+        {/if}
       </section>
     {/each}
     <p class="foot"><a href="#bench">Python test bench</a></p>
@@ -90,6 +123,17 @@
     position: absolute; top: -26px; background: var(--card); border: 2px solid var(--line);
     border-radius: 10px; padding: 0 10px; font-weight: 800; font-size: 12px; color: var(--mint-edge);
   }
+  .quiz-row { position: relative; display: flex; justify-content: center; padding: 22px 0 4px; }
+  .quiz {
+    display: flex; align-items: center; gap: 12px; text-align: left; min-width: 260px;
+    background: var(--bg); color: var(--ink); border: 2px solid var(--edge); border-bottom-width: 6px;
+    border-radius: 16px; padding: 10px 18px; cursor: pointer; font: inherit;
+  }
+  .quiz:disabled { cursor: not-allowed; color: #9a937d; background: var(--lock); border-color: var(--lock-edge); }
+  .quiz:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 3px; }
+  .quiz-text { display: grid; }
+  .quiz-text small { font-weight: 700; color: var(--muted); }
+  .quiz.passed .quiz-text small, .quiz.here .quiz-text small { color: var(--ink); }
   .foot { text-align: center; margin-top: 40px; font-size: 14px; }
   .foot a { color: var(--muted); }
 </style>
