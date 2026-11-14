@@ -10,13 +10,16 @@ const post = (message: FromWorker) => self.postMessage(message);
 
 async function init(indexURL: string) {
   const started = performance.now();
+  let stage = 'loading pyodide.mjs';
   try {
     const { loadPyodide } = await import(/* @vite-ignore */ `${indexURL}pyodide.mjs`);
+    stage = 'starting Python (loading the Python files)';
     pyodide = (await loadPyodide({ indexURL })) as PyodideAPI;
+    stage = 'running the setup code';
     pyodide.runPython(harness);
     post({ type: 'ready', loadMs: Math.round(performance.now() - started) });
   } catch (error) {
-    post({ type: 'failed', message: String(error) });
+    post({ type: 'failed', message: `Failed while ${stage}: ${error instanceof Error ? error.message : String(error)}` });
   }
 }
 

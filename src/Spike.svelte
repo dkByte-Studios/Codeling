@@ -3,9 +3,12 @@
   import { PythonRunner } from './lib/python/runner';
   import type { RunResult } from './lib/python/protocol';
   import { samples } from './lib/python/samples';
+  import { browserFacts } from './lib/python/diagnostics';
 
   const runner = new PythonRunner(import.meta.env.BASE_URL);
 
+  let failure = $state<string | null>(null);
+  let facts = $state('');
   let status = $state<'loading' | 'ready' | 'failed'>('loading');
   let loadMs = $state<number | null>(null);
   let code = $state(samples[0].code);
@@ -22,6 +25,11 @@
     status = s;
     loadMs = runner.loadMs;
     restarts = runner.restarts;
+    failure = runner.error;
+    if (s === 'failed') {
+      facts = browserFacts(import.meta.env.BASE_URL);
+      console.error('Python failed to start:', runner.error, '\n' + facts);
+    }
   };
 
   async function go(extraAnswer?: string) {
@@ -68,6 +76,15 @@
       {#if restarts > 0}<span class="chip">Restarts: {restarts}</span>{/if}
     </p>
   </header>
+
+  {#if status === 'failed'}
+    <div class="failure" role="alert">
+      <strong>Python could not start.</strong>
+      <p>{failure}</p>
+      <pre>{facts}</pre>
+      <button type="button" onclick={() => runner.retry()}>Try again</button>
+    </div>
+  {/if}
 
   <div class="samples">
     {#each samples as sample, i}
@@ -117,6 +134,9 @@
   .chip { background: var(--card); border: 2px solid var(--line); border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 13px; }
   .chip.ready { background: var(--leaf-tint); border-color: var(--leaf); color: var(--leaf-ink); }
   .chip.failed { background: var(--coral-tint); border-color: var(--coral); }
+  .failure { background: var(--coral-tint); border: 2px solid var(--coral); border-radius: 14px; padding: 12px 16px; margin: 0 0 16px; }
+  .failure p { margin: 4px 0 8px; }
+  .failure pre { white-space: pre-wrap; word-break: break-all; font-family: var(--mono); font-size: 12px; margin: 0 0 12px; }
   .samples { display: flex; flex-wrap: wrap; gap: 8px; }
   .note { color: var(--muted); margin: 8px 0 16px; }
   .bench { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
