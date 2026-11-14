@@ -5,12 +5,16 @@
   "type": "module",
   "description": "A Duolingo-style app that teaches programming. Starts with Python.",
   "scripts": {
-    "predev": "node scripts/copy-pyodide.mjs",
+    "content": "node scripts/build-content.mjs",
+    "predev": "node scripts/copy-pyodide.mjs && node scripts/build-content.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/copy-pyodide.mjs",
+    "prebuild": "node scripts/copy-pyodide.mjs && node scripts/build-content.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json"
+    "precheck": "node scripts/build-content.mjs",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "node --test \"scripts/*.test.mjs\"",
+    "verify": "node scripts/build-content.mjs && node scripts/verify-in-pyodide.mjs"
   },
   "dependencies": {
     "@fontsource-variable/jetbrains-mono": "^5.3.0",

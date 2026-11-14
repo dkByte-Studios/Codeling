@@ -88,12 +88,21 @@ export class PythonRunner {
     return this.ready;
   }
 
-  async run(options: RunOptions): Promise<RunResult> {
+  private chain: Promise<unknown> = Promise.resolve();
+
+  /** Runs one program at a time. A run asked for while another is going waits its turn. */
+  run(options: RunOptions): Promise<RunResult> {
+    const next = this.chain.then(() => this.execute(options));
+    this.chain = next.catch(() => {});
+    return next;
+  }
+
+  private async execute(options: RunOptions): Promise<RunResult> {
     await this.ready;
     const id = this.nextId++;
     const timeLimit = options.timeLimitMs ?? DEFAULT_TIME_LIMIT_MS;
     this.runStarted = performance.now();
-    return new Promise<RunResult>((resolve) => {
+    return new Promise<RunResult>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.restartWith('timeout');
       }, timeLimit);
@@ -107,17 +116,24 @@ export class PythonRunner {
       this.endRun = (status) => {
         clearTimeout(timer);
         this.pending = null;
-        resolve({ status, transcript: '', ms: Math.round(performance.now() - this.runStarted) });
+        resolve({ status, transcript: '', stdout: '', ms: Math.round(performance.now() - this.runStarted) });
       };
-      this.worker.postMessage({
-        type: 'run',
-        id,
-        code: options.code,
-        inputs: options.inputs ?? [],
-        files: options.files ?? {},
-        keepFiles: options.keepFiles ?? false,
-        seed: options.seed ?? 1,
-      } satisfies ToWorker);
+      try {
+        this.worker.postMessage({
+          type: 'run',
+          id,
+          code: options.code,
+          // Copies, so reactive objects from the page can always be sent to the worker.
+          inputs: [...(options.inputs ?? [])],
+          files: { ...(options.files ?? {}) },
+          keepFiles: options.keepFiles ?? false,
+          seed: options.seed ?? 1,
+        } satisfies ToWorker);
+      } catch (error) {
+        clearTimeout(timer);
+        this.pending = null;
+        reject(error);
+      }
     });
   }
 
